@@ -133,7 +133,7 @@ size_t
 rtos_total_allocated()
 {
 	size_t total = 0;
-
+	
 	for (alloc_t *ap = alloc_first(); ap != NULL; ap = ap->a_next)
 	{
 		total += ap->a_len;

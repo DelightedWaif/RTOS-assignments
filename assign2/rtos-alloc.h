@@ -72,6 +72,8 @@ size_t	rtos_alloc_size(void *ptr);
  */
 bool	rtos_allocated(void *ptr);
 
+bool	rtos_is_valid(void *ptr);
+
 /**
  * How much memory has been allocated by this allocator?
  *
