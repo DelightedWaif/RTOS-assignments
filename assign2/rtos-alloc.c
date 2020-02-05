@@ -15,14 +15,12 @@ alloc_t *first, *last;
 
 void *rtos_malloc(size_t size)
 {
-    // printf("in Malloc\n");
     alloc_t *allocation;
     allocation = mmap(NULL, sizeof(allocation) + size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     if (allocation == MAP_FAILED)
     {
         printf("Failed Mapping with error %d\n", errno);
     }
-    // printf("allocated %p\n", allocation);
     if (first == NULL)
     {
         first = last = allocation;
@@ -39,8 +37,8 @@ void *rtos_malloc(size_t size)
 
 void *rtos_realloc(void *ptr, size_t size)
 {
-    struct allocation *allocation;
-    for (struct allocation *ap = first; ap->a_next != NULL; ap = ap->a_next)
+    alloc_t *allocation;
+    for (alloc_t *ap = first; ap->a_next != NULL; ap = ap->a_next)
     {
         if (ptr == ap)
         {
@@ -56,9 +54,6 @@ void *rtos_realloc(void *ptr, size_t size)
 
 void rtos_free(void *ptr)
 {
-    // printf("first %p\n", first);
-    // printf("last %p\n", last);
-    // printf("prt %p\n", ptr);
     if (ptr == NULL)
     {
         return;
@@ -83,7 +78,6 @@ void rtos_free(void *ptr)
     }
     if (ptr == last)
     {
-        // printf("last\n");
         size_t len = last->a_len;
         last = last->a_prev;
         if (last == first)
@@ -92,26 +86,18 @@ void rtos_free(void *ptr)
         }
 
         int z = munmap(ptr, sizeof(alloc_t) + len);
-        // printf("%p\n", ptr);
-        // printf("%d\n", z);
         return;
     }
 
-    for (struct allocation *ap = first; ap->a_next != NULL; ap = ap->a_next)
+    for (alloc_t *ap = first; ap->a_next != NULL; ap = ap->a_next)
     {
-        // printf("current ptr: %p\n", ap);
-
         if (ptr == ap)
         {
-            // printf("found ptr\n");
-            // printf("%p\n", ap->a_prev->a_next);
             alloc_t *prev = ap->a_prev;
             alloc_t *next = ap->a_next;
             prev->a_next = ap->a_next;
             next->a_prev = ap->a_prev;
-            // printf("shifted\n");
             int z = munmap(ptr, sizeof(alloc_t) + ap->a_len);
-            // printf("%p\n", ptr);
             return;
         }
     }
@@ -127,23 +113,17 @@ size_t rtos_alloc_size(void *ptr)
     {
         return last->a_len;
     }
-    for (struct allocation *ap = first; ap->a_next != NULL; ap = ap->a_next)
+    for (alloc_t *ap = first; ap->a_next != NULL; ap = ap->a_next)
     {
-        printf("finding size\n");
         if (ptr == ap)
         {
-            printf("alloc size: %ld\n", ap->a_len);
             return ap->a_len;
         }
     }
-    printf("COULDNT FIND SIZE\n");
 }
 
 bool rtos_allocated(void *ptr)
 {
-    printf("first %p\n", first);
-    printf("last %p\n", last);
-    printf("prt %p\n", ptr);
     if (ptr == NULL || first == NULL)
     {
         return false;
@@ -156,15 +136,13 @@ bool rtos_allocated(void *ptr)
     {
         return false;
     }
-    for (struct allocation *ap = first; ap->a_next != NULL; ap = ap->a_next)
+    for (alloc_t *ap = first; ap->a_next != NULL; ap = ap->a_next)
     {
         if (ptr == ap)
         {
-            printf("allocated");
             return true;
         }
     }
-    printf("not allocated");
     return false;
 }
 
@@ -175,20 +153,16 @@ size_t rtos_total_allocated(void)
         return 0;
     }
     size_t total = 0;
-    for (struct allocation *ap = first; ap->a_next != NULL; ap = ap->a_next)
+    for (alloc_t *ap = first; ap->a_next != NULL; ap = ap->a_next)
     {
         total += ap->a_len;
     }
     total += last->a_len;
-    printf("rtos Total %ld\n", total);
     return total;
 }
 
 bool rtos_is_valid(void *ptr)
 {
-    printf("first %p\n", first);
-    printf("last %p\n", last);
-    printf("prt %p\n", ptr);
     if (ptr == NULL || first == NULL)
     {
         return false;
@@ -201,14 +175,12 @@ bool rtos_is_valid(void *ptr)
     {
         return false;
     }
-    for (struct allocation *ap = first; ap->a_next != NULL; ap = ap->a_next)
+    for (alloc_t *ap = first; ap->a_next != NULL; ap = ap->a_next)
     {
         if (ptr == ap)
         {
-            printf("allocated");
             return true;
         }
     }
-    printf("not allocated");
     return false;
 }

@@ -98,15 +98,6 @@ void time_calcs()
 	{
 		x_array[i] = rand() % (65 + 1 - 0) + 0;
 	}
-	printf("Good malloc");
-	for (int i = 0; i < 30; i++)
-	{
-		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &begin);
-		p = malloc(x_array[i]);
-		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
-		printf("%ld\n", end.tv_nsec - begin.tv_nsec);
-		free(p);
-	}
 	printf("my malloc");
 	for (int i = 0; i < 30; i++)
 	{
@@ -116,6 +107,16 @@ void time_calcs()
 		printf("%ld\n", end.tv_nsec - begin.tv_nsec);
 		rtos_free(p);
 	}
+	printf("Good malloc");
+	for (int i = 0; i < 30; i++)
+	{
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &begin);
+		p = malloc(x_array[i]);
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
+		printf("%ld\n", end.tv_nsec - begin.tv_nsec);
+		free(p);
+	}
+
 	printf("x");
 	for (size_t i = 0; i < 30; i++)
 	{
