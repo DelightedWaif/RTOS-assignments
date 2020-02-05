@@ -46,8 +46,8 @@ void *rtos_realloc(void *ptr, size_t size)
             break;
         }
     }
-    allocation->a_len = size;
-    allocation = mmap((void *)allocation, sizeof(allocation) + size, PROT_READ | PROT_WRITE, MAP_PRIVATE, 0, 0);
+    rtos_free(ptr);
+    allocation = rtos_malloc(size);
 
     return allocation;
 }

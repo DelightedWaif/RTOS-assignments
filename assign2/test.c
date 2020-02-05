@@ -124,9 +124,23 @@ void time_calcs()
 	}
 }
 
+void test_large_malloc() {
+	long int size = 1024*1024*1000000;
+	void *ptr = rtos_malloc(size);
+	if (ptr == NULL) {
+		printf("oof\n");
+	}
+	else
+	{
+		printf("%p     :", ptr);
+		printf("woot\n");
+	}
+	rtos_free(ptr);
+}
+
 int main(int argc, char *argv[])
 {
 	printf("in main\n");
-	time_calcs();
+	test_large_malloc();
 	return 0;
 }
