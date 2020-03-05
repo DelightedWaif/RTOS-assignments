@@ -7,10 +7,16 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "shell.h"
+#include <errno.h>
 
 int children = 0;
 int i = 0;
+int fileredir = 0;
+int err_redir = 0;
+char *filename;
 
 // Parses arguments from buffer
 char **get_args(char *buffer)
@@ -20,10 +26,33 @@ char **get_args(char *buffer)
     char **args = (char *)calloc(20, sizeof(char *));
     args[0] = token;
     int i = 1;
+    int file_next = 0;
     while (token != NULL)
     {
         token = strtok(NULL, delims);
-        args[i] = token;
+        if (token == NULL)
+        {
+            break;
+        }
+        if (file_next == 1)
+        {
+            file_next = 0;
+            strcpy(filename, token);
+        }
+        else if (strcmp(token, ">") == 0)
+        {
+            fileredir = 1;
+            file_next = 1;
+        }
+        else if (strcmp(token, "2>") == 0)
+        {
+            err_redir = 1;
+            file_next = 1;
+        }
+        else
+        {
+            args[i] = token;
+        }
         i++;
     }
     return args;
@@ -32,8 +61,7 @@ char **get_args(char *buffer)
 int main(int argc, char *argv[])
 {
     // set up pipes
-    int pipe_fds[2];
-    pipe(pipe_fds);
+    filename = (char *)malloc(100 * sizeof(char));
 
     // allocate arguments and history space
     int buff_size = 64;
@@ -54,45 +82,53 @@ int main(int argc, char *argv[])
             continue;
         }
         args = get_args(buff);
+
         strcpy(history + i, args[0]); // store argument in history
         pid_t pid = fork();
         if (pid == 0)
         {
-            // execute child
             children = 0;
-            dup2(pipe_fds[1], stdout);
-            close(pipe_fds[1]);
-            close(pipe_fds[0]);
+            // execute child
+            int fd;
+            if (fileredir == 1)
+            {
+                fd = open(filename,  O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+                dup2(fd, 1);
+            }
+            if (err_redir == 1)
+            {
+                fd = open(filename,  O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+                dup2(fd, 2);
+            }
+            close(fd);
             execvp(args[0], args);
         }
         else
         {
             // handle printing history
-            if (strcmp(history+i, "history") == 0)
+            if (strcmp(history + i, "history") == 0)
             {
                 printf("Session History: \n");
-                for (int j = 0; j < i+1; j++)
+                for (int j = 0; j < i + 1; j++)
                 {
                     printf("%s\n", (history + j));
                 }
                 continue;
             }
             children += 1;
-            close(pipe_fds[1]);
-            char buffer[4096];
             int stat;
-            int child_stat;
+            char buffer[4096];
             pid_t w = waitpid(pid, &stat, WUNTRACED);
             children -= 1;
-            read(pipe_fds[0], buffer, sizeof(buff));
-            close(pipe_fds[0]);
+            fileredir = 0;
+            err_redir = 0;
             if (WIFEXITED(stat))
             {
                 printf("Exited with status: %d\n", WEXITSTATUS(stat));
             }
             else if (WTERMSIG(stat) != 127)
             {
-                printf("Terminated by %s\n", strsignal(WTERMSIG(stat)));
+                printf("\nTerminated by %s\n", strsignal(WTERMSIG(stat)));
             }
             else
             {
