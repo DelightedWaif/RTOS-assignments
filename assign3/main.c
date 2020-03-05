@@ -1,8 +1,6 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -10,7 +8,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "shell.h"
-#include <errno.h>
+
+/*
+Timothy Mather shell
+201527769
+
+Includes:
+    Redirection
+    Suspension
+    Cancellation
+    History
+*/
 
 int children = 0;
 int i = 0;
@@ -90,6 +98,7 @@ int main(int argc, char *argv[])
             children = 0;
             // execute child
             int fd;
+            // redirect outputs to file if requested
             if (fileredir == 1)
             {
                 fd = open(filename,  O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
@@ -101,6 +110,7 @@ int main(int argc, char *argv[])
                 dup2(fd, 2);
             }
             close(fd);
+            // execute arguments
             execvp(args[0], args);
         }
         else
@@ -143,6 +153,8 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+
+// signal handling
 void signal_handler(int sig)
 {
     pid_t sig_pid = getpid();
